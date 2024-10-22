@@ -27,44 +27,42 @@ option go_package = "skywalking.apache.org/repo/goapi/collect/language/asyncprof
 import "common/Command.proto";
 
 service AsyncProfilerTask {
-  // collect data
+  // collect jfr binary data
   rpc collect(stream AsyncProfilerData) returns (skywalking.v3.Commands);
   // query all sniffer need to execute profile task commands
-  rpc getAsyncProfileTaskCommands (AsyncProfileTaskCommandQuery) returns (skywalking.v3.Commands);
+  rpc getAsyncProfilerTaskCommands (AsyncProfilerTaskCommandQuery) returns (skywalking.v3.Commands);
 }
 
 message AsyncProfilerData {
-  // current sniffer information
+  // current sniffer metadata information, first upload
   AsyncProfilerMetaData metaData = 1;
+
   oneof result {
-    AsyncProfilerError error = 2;
-    // file content
-    AsyncProfilerContent content = 3;
+    string errorMessage = 2;
+    // JFR binary content
+    bytes content = 3;
   }
 }
 
-message AsyncProfilerError {
-  int32 code = 1;
-  string message = 2;
-}
-
-message AsyncProfilerContent {
-  // first upload
-  int64 uploadTime = 1;
-  // first upload
-  int32 contentSize = 2;
-
-  bytes content = 3;
+enum AsyncProfilerCollectType {
+  // PROFILING_SUCCESS means the Java Agent has finished the execution
+  PROFILING_SUCCESS = 0;
+  // EXECUTION_TASK_ERROR means potential execution error caused by the Java Agent, such as an error in the sent task parameters.
+  EXECUTION_TASK_ERROR = 1;
 }
 
 message AsyncProfilerMetaData {
   string service = 1;
   string serviceInstance = 2;
-  // profiler task
+  // async-profiler task id
   string taskId = 3;
+  // AsyncProfilerCollectType means profiling success or failure
+  AsyncProfilerCollectType type = 4;
+  // if type is success then it will be the size of the JFR file, otherwise it will be 0
+  int32 contentSize = 5;
 }
 
-message AsyncProfileTaskCommandQuery {
+message AsyncProfilerTaskCommandQuery {
   // current sniffer information
   string service = 1;
   string serviceInstance = 2;
