@@ -37,6 +37,9 @@ service ProfileTask {
     rpc collectSnapshot (stream ThreadSnapshot) returns (Commands) {
     }
 
+    rpc collectGoPprof (stream PprofData) returns (Commands) {
+    }
+
     // report profiling task finished
     rpc reportTaskFinish (ProfileTaskFinishReport) returns (Commands) {
     }
@@ -64,6 +67,26 @@ message ThreadSnapshot {
     int32 sequence = 4;
     // snapshot stack
     ThreadStack stack = 5;
+}
+
+message PprofData {
+  string service = 1;
+  string serviceInstance = 2;
+  string taskId = 3;
+  PprofExecutionStatus type = 4;
+  int32 contentSize = 5;
+
+  oneof result {
+    string errorMessage = 6;
+    // Pprof binary content
+    bytes content = 7;
+  }
+}
+
+enum PprofExecutionStatus {
+  PROFILING_SUCCESS = 0;
+  EXECUTION_TASK_ERROR = 1;
+  TERMINATED_BY_OVERSIZE = 2;
 }
 
 message ThreadStack {
